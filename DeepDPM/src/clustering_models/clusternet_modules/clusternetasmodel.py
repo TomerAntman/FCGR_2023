@@ -195,12 +195,11 @@ class ClusterNetModel(pl.LightningModule):
             pi=self.pi,
             logger=self.logger
         )
-        self.log(
-            "cluster_net_train/train/cluster_loss",
-            self.hparams.cluster_loss_weight * cluster_loss,
-            on_step=True,
-            on_epoch=False,
-        )
+        self.log({"cluster_net_train/train/cluster_loss":
+            self.hparams.cluster_loss_weight * cluster_loss})#,
+        #     on_step=True,
+        #     on_epoch=False,
+        # )
         loss = self.hparams.cluster_loss_weight * cluster_loss
 
         if not self.hparams.ignore_subclusters and optimizer_idx == self.optimizers_dict_idx["subcluster_net_opt"]:
@@ -221,11 +220,11 @@ class ClusterNetModel(pl.LightningModule):
                     pis_sub=self.pi_sub
                 )
                 self.log(
-                    "cluster_net_train/train/subcluster_loss",
-                    self.hparams.subcluster_loss_weight * subcluster_loss,
-                    on_step=True,
-                    on_epoch=True,
-                )
+                    {"cluster_net_train/train/subcluster_loss":
+                    self.hparams.subcluster_loss_weight * subcluster_loss})#,
+                #     on_step=True,
+                #     on_epoch=True,
+                # )
                 loss = self.hparams.subcluster_loss_weight * subcluster_loss
             else:
                 sublogits = None
@@ -282,7 +281,7 @@ class ClusterNetModel(pl.LightningModule):
                 pi=self.pi
             )
             loss = self.hparams.cluster_loss_weight * cluster_loss
-            self.log("cluster_net_train/val/cluster_loss", loss)
+            self.log({"cluster_net_train/val/cluster_loss": loss})
 
             if self.current_epoch >= self.hparams.start_sub_clustering and not self.hparams.ignore_subclusters:
                 subclusters = self.subcluster(codes, logits)
@@ -298,7 +297,7 @@ class ClusterNetModel(pl.LightningModule):
                     else None,
                     pis_sub=self.pi_sub
                 )
-                self.log("cluster_net_train/val/subcluster_loss", subcluster_loss)
+                self.log({"cluster_net_train/val/subcluster_loss": subcluster_loss})
                 loss += self.hparams.subcluster_loss_weight * subcluster_loss
             else:
                 subclusters = None
@@ -373,8 +372,8 @@ class ClusterNetModel(pl.LightningModule):
                         gt = gt[:2 * (10**5)]
                     init_nmi = normalized_mutual_info_score(gt, init_labels)
                     init_ari = adjusted_rand_score(gt, init_labels)
-                    self.log("cluster_net_train/init_nmi", init_nmi)
-                    self.log("cluster_net_train/init_ari", init_ari)
+                    self.logger.log_metrics({"cluster_net_train/init_nmi": init_nmi,
+                                      "cluster_net_train/init_ari": init_ari})
                 if self.hparams.log_emb == "every_n_epochs" and (self.current_epoch % self.hparams.log_emb_every == 0 or self.current_epoch == 1):
                     self.plot_utils.visualize_embeddings(
                         self.hparams,
@@ -414,10 +413,10 @@ class ClusterNetModel(pl.LightningModule):
             else:
                 clus_losses = outputs
             avg_clus_loss = torch.stack([x["loss"] for x in clus_losses]).mean()
-            self.log("cluster_net_train/train/avg_cluster_loss", avg_clus_loss)
+            self.log({"cluster_net_train/train/avg_cluster_loss": avg_clus_loss})
             if self.current_epoch >= self.hparams.start_sub_clustering and not self.hparams.ignore_subclusters:
                 avg_subclus_loss = torch.stack([x["loss"] for x in subclus_losses]).mean()
-                self.log("cluster_net_train/train/avg_subcluster_loss", avg_subclus_loss)
+                self.log({"cluster_net_train/train/avg_subcluster_loss": avg_subclus_loss})
 
             # Compute mus and perform splits/merges
             perform_split = self.training_utils.should_perform_split(
@@ -557,12 +556,12 @@ class ClusterNetModel(pl.LightningModule):
             self.update_params_split_merge()
             print("Current number of clusters: ", self.K)
         
-        self.logger.log_metric("Number of predicted clusters", self.K)
+        self.logger.log_metrics({"Number of predicted clusters": self.K})
 
     def validation_epoch_end(self, outputs):
         # Take mean of all batch losses
         avg_loss = torch.stack([x["loss"] for x in outputs]).mean()
-        self.log("cluster_net_train/val/avg_val_loss", avg_loss)
+        self.log({"cluster_net_train/val/avg_val_loss": avg_loss})
         if self.current_training_stage != "gather_codes" and self.hparams.evaluate_every_n_epochs and self.current_epoch % self.hparams.evaluate_every_n_epochs == 0:
             z = self.val_resp.argmax(axis=1).cpu()
             nmi = normalized_mutual_info_score(
@@ -899,14 +898,14 @@ class ClusterNetModel(pl.LightningModule):
             K=len(torch.unique(gt[stage])),
         )
         plt.close(fig)
-        self.logger.log_image(f"cluster_net_train/{stage}/clusters_fig_gt_labels", fig)
+        self.logger.log_image(key = f"cluster_net_train/{stage}/clusters_fig_gt_labels", images=[fig])
         fig = self.plot_utils.plot_clusters_colored_by_net(
             samples=self.codes,
             y_net=cluster_net_labels,
             n_epoch=self.current_epoch,
             K=len(torch.unique(cluster_net_labels)),
         )
-        self.logger.log_image("cluster_net_train/train/clusters_fig_net_labels", fig)
+        self.logger.log_image(key = "cluster_net_train/train/clusters_fig_net_labels", images=[fig])
         plt.close(fig)
 
     def log_clustering_metrics(self, stage="train"):
@@ -918,8 +917,8 @@ class ClusterNetModel(pl.LightningModule):
             gt = self.val_gt
             resp = self.val_resp
             k_gap = self.K - self.hparams.True_k
-            self.log("cluster_net_train/Networks_k", self.K)
-            self.log("cluster_net_train/Networks_k_size_gap", k_gap)
+            self.logger.log_metrics({"cluster_net_train/Networks_k": self.K,
+                              "cluster_net_train/Networks_k_size_gap": k_gap})
         elif stage == "total":
             gt = torch.cat([self.train_gt, self.val_gt])
             resp = torch.cat([self.train_resp, self.val_resp])
@@ -939,11 +938,12 @@ class ClusterNetModel(pl.LightningModule):
         ari = adjusted_rand_score(gt, z)
         acc_top5, acc = training_utils.cluster_acc(gt, z, z_top5)
         
-        self.log(f"cluster_net_train/{stage}/{stage}_nmi", gt_nmi, on_epoch=True, on_step=False)
-        self.log(f"cluster_net_train/{stage}/{stage}_ari", ari, on_epoch=True, on_step=False)
-        self.log(f"cluster_net_train/{stage}/{stage}_acc", acc, on_epoch=True, on_step=False)
-        self.log(f"cluster_net_train/{stage}/{stage}_acc_top5", acc_top5, on_epoch=True, on_step=False)
-        self.log(f"cluster_net_train/{stage}/unique_z", unique_z, on_epoch=True, on_step=False)
+        #self.log(f"cluster_net_train/{stage}/{stage}_nmi", gt_nmi, on_epoch=True, on_step=False)
+        self.logger.log_metrics({f"cluster_net_train/{stage}/{stage}_nmi": gt_nmi,
+                          f"cluster_net_train/{stage}/{stage}_ari": ari,
+                          f"cluster_net_train/{stage}/{stage}_acc": acc,
+                          f"cluster_net_train/{stage}/{stage}_acc_top5": acc_top5,
+                          f"cluster_net_train/{stage}/unique_z": unique_z})#, on_epoch=True, on_step=False)
 
         if self.hparams.offline and ((self.hparams.log_metrics_at_train and stage == "train") or ( not self.hparams.log_metrics_at_train and stage!="train")):
             print(f"NMI : {gt_nmi}, ARI: {ari}, ACC: {acc}, current K: {unique_z}")
@@ -961,16 +961,17 @@ class ClusterNetModel(pl.LightningModule):
             ami = adjusted_mutual_info_score(gt.numpy(), z.numpy())
             (homogeneity, completeness, v_measure) = homogeneity_completeness_v_measure(gt.numpy(), z.numpy())
 
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_nmi", gt_nmi, on_epoch=True, on_step=False)
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_ari", ari, on_epoch=True, on_step=False)
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_acc", acc, on_epoch=True, on_step=False)
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_acc_top5", acc_top5, on_epoch=True, on_step=False)
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_silhouette_score", silhouette, on_epoch=True, on_step=False)
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_ami", ami, on_epoch=True, on_step=False)
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_homogeneity", homogeneity, on_epoch=True, on_step=False)
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_v_measure", v_measure, on_epoch=True, on_step=False)
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_completeness", completeness, on_epoch=True, on_step=False)
-            self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_unique_z", unique_z, on_epoch=True, on_step=False)
+            #self.log(f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_nmi", gt_nmi, on_epoch=True, on_step=False)
+            self.logger.log_metrics({f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_nmi": gt_nmi,
+                                     f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_ari": ari,
+                                     f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_acc": acc,
+                                     f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_acc_top5": acc_top5,
+                                     f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_silhouette_score": silhouette,
+                                     f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_ami": ami,
+                                     f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_homogeneity": homogeneity,
+                                     f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_v_measure": v_measure,
+                                     f"cluster_net_train/{stage}/alt_{alt_stage}_{stage}_completeness": completeness,
+                                     f"cluster_net_train/{stage}/alt_{alt_stage}_unique_z": unique_z})#, on_epoch=True, on_step=False)
 
     @staticmethod
     def add_model_specific_args(parent_parser):

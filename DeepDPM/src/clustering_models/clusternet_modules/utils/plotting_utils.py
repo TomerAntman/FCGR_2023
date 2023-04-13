@@ -27,7 +27,7 @@ class PlotUtils:
         self.colors = None
         self.device = "cuda" if torch.cuda.is_available() and hparams.gpus is not None else "cpu"
 
-    def visualize_embeddings(self, hparams, logger, codes_dim, vae_means, vae_labels=None, val_resp=None, current_epoch=None, UMAP=True, EM_labels=None, y_hat=None, stage="cluster_net_train", centers=None, training_stage='val'):
+    def visualize_embeddings(self, hparams, logger, codes_dim, vae_means, vae_labels=None, val_resp=None, current_epoch=None, UMAP=False, EM_labels=None, y_hat=None, stage="cluster_net_train", centers=None, training_stage='val'):
         method = "UMAP" if UMAP else "TSNE"
         if codes_dim > 2:
             if training_stage != "val_thesis" or (training_stage == "val_thesis" and not hasattr(self, 'val_embb')):
@@ -55,7 +55,7 @@ class PlotUtils:
                 plt.title(f"{method} embeddings, epoch {current_epoch}")
                 from pytorch_lightning.loggers.base import DummyLogger
                 if not isinstance(self.logger, DummyLogger):
-                    logger.log_image(f"{stage}/{training_stage}/{method} embeddings using net labels", fig)
+                    logger.log_image(key = f"{stage}/{training_stage}/{method} embeddings using net labels", images = [fig])
                 plt.close(fig)
 
             else:
@@ -71,7 +71,7 @@ class PlotUtils:
                 ax.axes.yaxis.set_ticks([])
                 from pytorch_lightning.loggers.base import DummyLogger
                 if not isinstance(self.logger, DummyLogger):
-                    logger.log_image(f"{stage}/{training_stage}/{method} embeddings using net labels new", fig)
+                    logger.log_image(key = f"{stage}/{training_stage}/{method} embeddings using net labels new", images = [fig])
                 plt.close(fig)
 
         if y_hat is not None:
@@ -81,7 +81,7 @@ class PlotUtils:
 
             from pytorch_lightning.loggers.base import DummyLogger
             if not isinstance(self.logger, DummyLogger):
-                logger.log_image(f"{stage}/{training_stage}/{method} embeddings using net pseudo-labels", fig)
+                logger.log_image(key = f"{stage}/{training_stage}/{method} embeddings using net pseudo-labels", images=[fig])
             plt.close(fig)
 
         fig = plt.figure(figsize=(16, 10))
@@ -99,9 +99,9 @@ class PlotUtils:
         from pytorch_lightning.loggers.base import DummyLogger
         if not isinstance(logger, DummyLogger):
             if EM_labels is None:
-                logger.log_image(f"{stage}/{training_stage}/{method} embeddings using true labels", fig)
+                logger.log_image(key = f"{stage}/{training_stage}/{method} embeddings using true labels", images=[fig])
             else:
-                logger.log_image(f"{stage}/{training_stage}/{method} embeddings using EM labels", fig)
+                logger.log_image(key = f"{stage}/{training_stage}/{method} embeddings using EM labels", images=[fig])
         plt.close(fig)
 
     def visualize_embeddings_old(data, labels, use_pca_first=False):
@@ -417,7 +417,7 @@ class PlotUtils:
             plt.title(f"the eigenvalues of cov {i} to be split, epoch {epoch}")
             plt.xlabel("Eigenvalues inds")
             plt.ylabel("Eigenvalues")
-            self.logger.log_image(f"cluster_net_train/train/epoch {epoch}/eigenvalues_cov_{i}", fig)
+            self.logger.log_image(key = f"cluster_net_train/train/epoch {epoch}/eigenvalues_cov_{i}", images=[fig])
             plt.close(fig)
 
     def update_colors(self, split, split_inds, merge_inds):

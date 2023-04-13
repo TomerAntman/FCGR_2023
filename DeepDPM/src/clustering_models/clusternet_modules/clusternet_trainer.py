@@ -23,7 +23,7 @@ class ClusterNetTrainer:
             pl.utilities.seed.seed_everything(self.args.seed)
 
     def fit(self, train_loader, val_loader, logger, n_epochs, centers=None):
-        from pytorch_lightning.loggers import NeptuneLogger
+        from pytorch_lightning.loggers import NeptuneLogger, WandbLogger
         from pytorch_lightning.loggers.base import DummyLogger
         
         if isinstance(logger, NeptuneLogger):

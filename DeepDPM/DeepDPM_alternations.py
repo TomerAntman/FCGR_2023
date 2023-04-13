@@ -93,7 +93,7 @@ def parse_args():
     parser.add_argument(
         "--API_key",
         type=str,
-        default="",
+        default="your_API_token",
         help="API key for logger (neptune or wandb)"
     )
     parser.add_argument(
@@ -271,9 +271,9 @@ def train_clusternet_with_alternations():
             else:
                 print("Validation evaluation")
             print(f"NMI: {nmi}, ARI: {ari}, acc: {acc}, final K: {len(np.unique(pred))}")
-            logger.log_metric(f"{['train','val'][i]}/final_NMI", nmi)
-            logger.log_metric(f"{['train','val'][i]}/final_ACC", acc)
-            logger.log_metric(f"{['train','val'][i]}/final_ARI", ari)
+            logger.log_metrics({f"{['train','val'][i]}/final_NMI": nmi},
+                               {f"{['train','val'][i]}/final_ACC": acc},
+                               {f"{['train','val'][i]}/final_ARI": ari})
     # save model
     if args.save_model:
         os.makedirs(f'./saved_models/{args.dataset}/{args.exp_name}', exist_ok=True)

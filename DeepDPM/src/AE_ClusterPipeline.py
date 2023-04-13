@@ -139,7 +139,7 @@ class AE_ClusterPipeline(pl.LightningModule):
                 save_dict['alt_num'] = self.init_clusternet_num
                 torch.save(save_dict, f'./saved_models/{self.args.dataset}/{self.args.exp_name}/alt_{self.init_clusternet_num}_checkpoint.pth.tar')
             self.init_clusternet_num += 1
-            self.log("alt_num", self.init_clusternet_num)
+            self.log({"alt_num": self.init_clusternet_num})
 
         else:
             batch_X, batch_Y = [], []
@@ -156,7 +156,7 @@ class AE_ClusterPipeline(pl.LightningModule):
             if self.args.evaluate_every_n_epochs and self.current_epoch % self.args.evaluate_every_n_epochs == 0:
                 y_pred = self.clustering.update_assign(torch.from_numpy(batch_X))
                 init_nmi = normalized_mutual_info_score(batch_Y.numpy(), y_pred.argmax(-1))
-                self.log("train/k_means_init_nmi", init_nmi)
+                self.log({"train/k_means_init_nmi": init_nmi})
 
         if verbose:
             print("========== End initializing clusters ==========\n")
@@ -211,7 +211,7 @@ class AE_ClusterPipeline(pl.LightningModule):
             #ax2.imshow(rec_X_plot_stacked)
             ax2.axis('off')
             fig.suptitle(f"Epoch: {self.current_epoch}", y=0.95)
-            self.logger.log_image(f"Reconstruction/{self.stage}", fig) #/{self.current_epoch}
+            self.logger.log_image(key = f"Reconstruction/{self.stage}", images=[fig]) #/{self.current_epoch}
             plt.close(fig)
         # if self.args.ConvVAE:
         #     loss = self.feature_extractor.get_loss(rec_X, x, mu, log_var)
@@ -269,7 +269,7 @@ class AE_ClusterPipeline(pl.LightningModule):
             #ax2.imshow(rec_X_plot_stacked)
             ax2.axis('off')
             fig.suptitle(f"Epoch: {self.current_epoch}", y=0.95)
-            self.logger.log_image(f"Reconstruction/{self.stage}", fig) #/{self.current_epoch}
+            self.logger.log_image(key=f"Reconstruction/{self.stage}", images=[fig]) #/{self.current_epoch}
             plt.close(fig)
 
         # save for plotting
@@ -316,8 +316,8 @@ class AE_ClusterPipeline(pl.LightningModule):
         self.sampled_codes = torch.empty(0)
         self.sampled_gt = torch.empty(0)
         if self.current_epoch == 0:
-            self.log('data_stats/train_n_samples', len(self.train_dataloader().dataset))
-            self.log('data_stats/val_n_samples', len(self.val_dataloader().dataset))
+            self.log({'data_stats/train_n_samples': len(self.train_dataloader().dataset)})
+            self.log({'data_stats/val_n_samples': len(self.val_dataloader().dataset)})
             if self.args.pretrain:
                 assert self.args.pretrain_epochs > 0
                 print("========== Start pretraining ==========")
@@ -358,9 +358,9 @@ class AE_ClusterPipeline(pl.LightningModule):
         else:
             self.stage = "val"
             loss, rec_loss, dist_loss = self._step(x, y)
-        self.log(f"{self.stage}/loss", loss)
-        self.log(f"{self.stage}/reconstruction_loss", rec_loss)
-        self.log(f"{self.stage}/dist_loss", dist_loss)
+        self.log({f"{self.stage}/loss": loss})
+        self.log({f"{self.stage}/reconstruction_loss": rec_loss})
+        self.log({f"{self.stage}/dist_loss": dist_loss})
 
         _, assign = self(x)
         y_pred = assign.argmax(-1).cpu().numpy()
@@ -384,9 +384,9 @@ class AE_ClusterPipeline(pl.LightningModule):
         else:
             self.stage = "train"
             loss, rec_loss, dist_loss = self._step(x, y)
-        self.log(f"{self.stage}/loss", loss)
-        self.log(f"{self.stage}/reconstruction_loss", rec_loss)
-        self.log(f"{self.stage}/dist_loss", dist_loss)
+        self.log({f"{self.stage}/loss": loss})
+        self.log({f"{self.stage}/reconstruction_loss": rec_loss})
+        self.log({f"{self.stage}/dist_loss": dist_loss})
 
         return loss
 
@@ -403,10 +403,10 @@ class AE_ClusterPipeline(pl.LightningModule):
             NMI = normalized_mutual_info_score(y_gt, y_pred)
             ARI = adjusted_rand_score(y_gt, y_pred)
             ACC_top5, ACC = training_utils.cluster_acc(torch.tensor(y_gt), torch.from_numpy(y_pred))
-            self.log("val/avg_loss", avg_loss)
-            self.log("val/NMI", NMI)
-            self.log("val/ARI", ARI)
-            self.log("val/ACC", ACC)
+            self.logger.log_metrics({"val/avg_loss": avg_loss,
+                              "val/NMI": NMI,
+                              "val/ARI": ARI,
+                              "val/ACC": ACC})
 
         if not self.pretrain and self.args.log_emb != "never" and self.current_epoch in (0, 5, 10, 50, 100, 200, 400, 499, 500, 600, 700, 800, 900, 100):
             self.plot_utils.visualize_embeddings(

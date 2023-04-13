@@ -138,12 +138,12 @@ def run_on_embeddings_hyperparams(parent_parser):
     parser.add_argument(
         "--log_emb_every",
         type=int,
-        default=20,
+        default=40,
     )
     parser.add_argument(
         "--log_emb",
         type=str,
-        default="never",
+        default="every_n_epochs",
         choices=["every_n_epochs", "only_sampled", "never"]
     )
     parser.add_argument(
