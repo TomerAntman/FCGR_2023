@@ -1,0 +1,160 @@
+alabaster @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/alabaster/alabaster-0.7.12
+appdirs @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/appdirs/appdirs-1.4.4
+asn1crypto @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/asn1crypto/asn1crypto-1.4.0
+atomicwrites @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/atomicwrites/atomicwrites-1.4.0
+attrs @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/attrs/attrs-21.2.0
+Babel @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/Babel/Babel-2.9.1
+backports.entry-points-selectable @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/backportsentry_points_selectable/backports.entry_points_selectable-1.1.0
+backports.functools-lru-cache @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/backportsfunctools_lru_cache/backports.functools_lru_cache-1.6.4
+bcrypt @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/bcrypt/bcrypt-3.2.0
+beniget @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/beniget/beniget-0.4.1
+biopython @ file:///apps/easybd/easybuild/build/Biopython/1.79/foss-2021b/biopython-1.79
+bitstring @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/bitstring/bitstring-3.1.9
+blist @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/blist/blist-1.3.6
+Bottleneck @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/Bottleneck/Bottleneck-1.3.2
+CacheControl @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/CacheControl/CacheControl-0.12.6
+cachy @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/cachy/cachy-0.3.0
+certifi @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/certifi/certifi-2021.5.30
+cffi @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/cffi/cffi-1.14.6
+chardet @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/chardet/chardet-4.0.0
+charset-normalizer @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/charsetnormalizer/charset-normalizer-2.0.4
+cleo @ file:///apps/easybd/easybuild/sources/p/Python/extensions/cleo-0.8.1-py2.py3-none-any.whl
+click @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/click/click-8.0.1
+clikit @ file:///apps/easybd/easybuild/sources/p/Python/extensions/clikit-0.6.2-py2.py3-none-any.whl
+colorama @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/colorama/colorama-0.4.4
+colorcet==3.0.1
+contourpy==1.0.7
+crashtest @ file:///apps/easybd/easybuild/sources/p/Python/extensions/crashtest-0.3.1-py3-none-any.whl
+cryptography @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/cryptography/cryptography-3.4.7
+cycler==0.11.0
+Cython @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/Cython/Cython-0.29.24
+datashader==0.14.4
+datashape==0.5.2
+deap @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/deap/deap-1.3.1
+decorator @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/decorator/decorator-5.0.9
+distlib @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/distlib/distlib-0.3.2
+docopt @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/docopt/docopt-0.6.2
+docutils @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/docutils/docutils-0.17.1
+ecdsa @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/ecdsa/ecdsa-0.17.0
+filelock @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/filelock/filelock-3.0.12
+flit @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/flit/flit-3.3.0
+flit_core @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/flitcore/flit_core-3.3.0
+fonttools==4.39.3
+fsspec @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/fsspec/fsspec-2021.7.0
+future @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/future/future-0.18.2
+gast @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/gast/gast-0.5.2
+glob2 @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/glob2/glob2-0.7
+holoviews==1.15.4
+html5lib @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/html5lib/html5lib-1.1
+idna @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/idna/idna-3.2
+imagesize @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/imagesize/imagesize-1.2.0
+importlib-metadata @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/importlib_metadata/importlib_metadata-4.6.3
+importlib-resources @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/importlib_resources/importlib_resources-5.2.2
+iniconfig @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/iniconfig/iniconfig-1.1.1
+intervaltree @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/intervaltree/intervaltree-3.1.0
+intreehooks @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/intreehooks/intreehooks-1.0
+ipaddress @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/ipaddress/ipaddress-1.0.23
+jeepney @ file:///apps/easybd/easybuild/sources/p/Python/extensions/jeepney-0.7.1-py3-none-any.whl
+Jinja2 @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/Jinja2/Jinja2-3.0.1
+joblib @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/joblib/joblib-1.0.1
+jsonschema @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/jsonschema/jsonschema-3.2.0
+keyring @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/keyring/keyring-21.2.0
+keyrings.alt @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/keyringsalt/keyrings.alt-4.1.0
+kiwisolver==1.4.4
+liac-arff @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/liacarff/liac-arff-2.5.0
+lockfile @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/lockfile/lockfile-0.12.2
+Markdown==3.4.1
+MarkupSafe @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/MarkupSafe/MarkupSafe-2.0.1
+matplotlib==3.7.1
+mock @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/mock/mock-4.0.3
+more-itertools @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/moreitertools/more-itertools-8.8.0
+mpi4py @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/mpi4py/mpi4py-3.1.1
+mpmath @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/mpmath/mpmath-1.2.1
+msgpack @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/msgpack/msgpack-1.0.2
+netaddr @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/netaddr/netaddr-0.8.0
+netifaces @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/netifaces/netifaces-0.11.0
+nose @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/nose/nose-1.3.7
+numexpr @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/numexpr/numexpr-2.7.3
+numpy @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/numpy/numpy-1.21.3
+packaging==23.0
+pandas @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/pandas/pandas-1.3.4
+panel==0.14.3
+param==1.12.3
+paramiko @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/paramiko/paramiko-2.7.2
+pastel @ file:///apps/easybd/easybuild/sources/p/Python/extensions/pastel-0.2.1-py2.py3-none-any.whl
+pathlib2 @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pathlib2/pathlib2-2.3.6
+paycheck @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/paycheck/paycheck-1.0.2
+pbr @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pbr/pbr-5.6.0
+pexpect @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pexpect/pexpect-4.8.0
+Pillow==9.5.0
+pkginfo @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pkginfo/pkginfo-1.7.1
+platformdirs @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/platformdirs/platformdirs-2.2.0
+pluggy @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pluggy/pluggy-0.13.1
+ply @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/ply/ply-3.11
+poetry @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/poetry/poetry-1.1.7
+poetry-core @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/poetrycore/poetry-core-1.0.3
+psutil @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/psutil/psutil-5.8.0
+ptyprocess @ file:///apps/easybd/easybuild/sources/p/Python/extensions/ptyprocess-0.7.0-py2.py3-none-any.whl
+py @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/py/py-1.10.0
+py-expression-eval @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/py_expression_eval/py_expression_eval-0.3.13
+pyasn1 @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pyasn1/pyasn1-0.4.8
+pybind11 @ file:///apps/easybd/easybuild/build/pybind11/2.7.1/GCCcore-11.2.0/pybind11-2.7.1
+pycparser @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pycparser/pycparser-2.20
+pycrypto @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pycrypto/pycrypto-2.6.1
+pyct==0.5.0
+Pygments @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/Pygments/Pygments-2.9.0
+pylev @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pylev/pylev-1.4.0
+PyNaCl @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/PyNaCl/PyNaCl-1.4.0
+pynndescent==0.5.8
+pyparsing @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pyparsing/pyparsing-2.4.7
+pyrsistent @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pyrsistent/pyrsistent-0.18.0
+pysam @ file:///apps/easybd/easybuild/build/Pysam/0.17.0/GCC-11.2.0/pysam-0.17.0
+pytest @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pytest/pytest-6.2.4
+python-dateutil @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pythondateutil/python-dateutil-2.8.2
+pythran @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/pythran/pythran-0.10.0
+pytoml @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pytoml/pytoml-0.1.21
+pytz @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/pytz/pytz-2021.1
+pyviz-comms==2.2.1
+PyYAML==6.0
+regex @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/regex/regex-2021.8.3
+requests @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/requests/requests-2.26.0
+requests-toolbelt @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/requeststoolbelt/requests-toolbelt-0.9.1
+scandir @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/scandir/scandir-1.10.0
+scikit-learn==1.0.2
+scipion-installer==1.0.14
+scipy @ file:///apps/easybd/easybuild/build/SciPybundle/2021.10/foss-2021b/scipy/scipy-1.7.1
+SecretStorage @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/SecretStorage/SecretStorage-3.3.1
+semantic-version @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/semantic_version/semantic_version-2.8.5
+setuptools-rust @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/setuptoolsrust/setuptools-rust-0.12.1
+setuptools-scm @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/setuptools_scm/setuptools_scm-6.0.1
+shellingham @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/shellingham/shellingham-1.4.0
+simplegeneric @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/simplegeneric/simplegeneric-0.8.1
+simplejson @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/simplejson/simplejson-3.17.3
+six @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/six/six-1.16.0
+snowballstemmer @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/snowballstemmer/snowballstemmer-2.1.0
+sortedcontainers @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/sortedcontainers/sortedcontainers-2.4.0
+Sphinx @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/Sphinx/Sphinx-4.1.2
+sphinx-bootstrap-theme @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/sphinxbootstraptheme/sphinx-bootstrap-theme-0.7.1
+sphinxcontrib-applehelp @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/sphinxcontribapplehelp/sphinxcontrib-applehelp-1.0.2
+sphinxcontrib-devhelp @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/sphinxcontribdevhelp/sphinxcontrib-devhelp-1.0.2
+sphinxcontrib-htmlhelp @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/sphinxcontribhtmlhelp/sphinxcontrib-htmlhelp-2.0.0
+sphinxcontrib-jsmath @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/sphinxcontribjsmath/sphinxcontrib-jsmath-1.0.1
+sphinxcontrib-qthelp @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/sphinxcontribqthelp/sphinxcontrib-qthelp-1.0.3
+sphinxcontrib-serializinghtml @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/sphinxcontribserializinghtml/sphinxcontrib-serializinghtml-1.1.5
+sphinxcontrib-websupport @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/sphinxcontribwebsupport/sphinxcontrib-websupport-1.2.4
+tabulate @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/tabulate/tabulate-0.8.9
+threadpoolctl @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/threadpoolctl/threadpoolctl-2.2.0
+toml @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/toml/toml-0.10.2
+tomlkit @ file:///apps/easybd/easybuild/sources/p/Python/extensions/tomlkit-0.7.2-py2.py3-none-any.whl
+tqdm==4.65.0
+typing-extensions @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/typing_extensions/typing_extensions-3.10.0.0
+ujson @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/ujson/ujson-4.0.2
+umap-learn==0.5.3
+urllib3 @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/urllib3/urllib3-1.26.6
+virtualenv @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/virtualenv/virtualenv-20.7.0
+wcwidth @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/wcwidth/wcwidth-0.2.5
+webencodings @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/webencodings/webencodings-0.5.1
+xarray==2023.1.0
+xlrd @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/xlrd/xlrd-2.0.1
+zipfile36 @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/zipfile36/zipfile36-0.1.3
+zipp @ file:///apps/easybd/easybuild/build/Python/3.9.6/GCCcore-11.2.0/zipp/zipp-3.5.0

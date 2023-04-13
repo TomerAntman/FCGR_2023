@@ -1,0 +1,46 @@
+mode: "isolate" # "isolate" or "community"
+
+# if mode == "community":
+community_paths:
+  home: "/home/labs/zeevid/Analyses/2022-HGR/SyntheticCommunity/Communities/"
+  bam: "BAM_files"
+  output: "FCGR_files"
+  #file_name: "community_S-0_N-3"
+  N: 3
+  S: 0
+
+# if mode == "isolate":
+isolate_paths:
+  home: '/home/labs/zeevid/Data/Samples/2022-HGR/HybridIsolates/PRJNA231221'
+  isolate_name: "GordoniaOtitidis_SAMN22365129"
+  output: '/home/labs/zeevid/Analyses/2022-HGR/BAM2FCGR'
+
+filters:
+  read_length: 10_000
+  max_num_reads: 10_000
+  tags:
+    consider_tags: 'ec'# 'ec,np,fn,rq' # string, comma separated (no spaces)
+    tags_filter: '10' # '10,5,2,0.999' # string, comma separated (no spaces)
+    #ec: effective coverage
+    #np: number of full-length subreads
+    #fn: Forward number of complete passes (zero or more)
+    #rq: Predicted average read quality
+
+save_format:
+  as_npy: False
+  as_npz: True
+  plot_examples: True
+
+FCGR:
+  hyperparams:
+    channels: 3 # int, greater or equal to 1
+    kmer_size: 5
+  methods:
+    IPD_stride: 'max' # "normal", "mean", "max", "emph_A"
+    IPD_r: 1 # float, between 0 and 1
+    IPD_stratification: "MeanStd" # "mean_std" or "full_range"
+  filters:
+    read_length: 10_000 # int, greater or equal to 1
+    tags:
+      consider_tags: 'ec'# 'ec,np,fn,rq'
+      tags_filter: '10' # '10,5,2,0.999'
