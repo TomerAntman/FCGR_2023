@@ -11,7 +11,7 @@ from math import lgamma
 from kmeans_pytorch import kmeans as GPU_KMeans
 
 from sklearn.neighbors import NearestNeighbors
-from src.clustering_models.clusternet_modules.utils.clustering_utils.clustering_operations import (
+from DeepDPM.src.clustering_models.clusternet_modules.utils.clustering_utils.clustering_operations import (
     _create_subclusters,
     compute_data_covs_soft_assignment,
     init_mus_and_covs_sub,

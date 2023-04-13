@@ -3,9 +3,9 @@ import torch
 #import umap
 import numpy as np
 
-from src.datasets import MNIST, CIFAR10, USPS
-from src.embbeded_datasets import embbededDataset
-from src.AE_ClusterPipeline import AE_ClusterPipeline
+from DeepDPM.src.datasets import MNIST, CIFAR10, USPS
+from DeepDPM.src.embbeded_datasets import embbededDataset
+from DeepDPM.src.AE_ClusterPipeline import AE_ClusterPipeline
 
 
 def parse_minimal_args(parser):

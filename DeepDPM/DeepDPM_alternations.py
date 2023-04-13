@@ -8,18 +8,22 @@ import os
 import torch
 import argparse
 import pytorch_lightning as pl
-from pytorch_lightning.loggers import NeptuneLogger
+#from pytorch_lightning.loggers import NeptuneLogger
+from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.loggers.base import DummyLogger
 import numpy as np
 
-from src.AE_ClusterPipeline import AE_ClusterPipeline
-from src.datasets import CustomDataset #MNIST, REUTERS,
-from src.clustering_models.clusternet_modules.clusternetasmodel import ClusterNetModel
+from DeepDPM.src.AE_ClusterPipeline import AE_ClusterPipeline
+from DeepDPM.src.datasets import CustomDataset #MNIST, REUTERS,
+from DeepDPM.src.clustering_models.clusternet_modules.clusternetasmodel import ClusterNetModel
 
 from sklearn.metrics import normalized_mutual_info_score as NMI
 from sklearn.metrics import adjusted_rand_score as ARI
-from src.utils import cluster_acc, check_args
+from DeepDPM.src.utils import cluster_acc, check_args
 import datetime
+
+import json
+import wandb
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -86,6 +90,12 @@ def parse_args():
     )
 
     # Logger parameters
+    parser.add_argument(
+        "--API_key",
+        type=str,
+        default="",
+        help="API key for logger (neptune or wandb)"
+    )
     parser.add_argument(
         "--tag",
         type=str,
@@ -204,26 +214,20 @@ def train_clusternet_with_alternations():
     if args.offline:
         logger = DummyLogger()
     else:
-        logger = NeptuneLogger(
-                api_key='eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI3M2NkOGE0MS1mZGRiLTQ3M2EtOWFlMS0wMmU1MGY3YzVkZjUifQ==',
-                project_name='DeepDPM-FCGR/MultiRun',
-                experiment_name=args.exp_name,
-                #name = f"{args.exp_name}_{args.dataset}",
-                params=vars(args),
-                tags=tags + [args.transform_input_data, args.exp_name, args.dataset, args.number_for_logger],
-            )
-
+        os.environ["WANDB_API_KEY"] = args.API_key
+        logger = WandbLogger(
+            project="DeepDPM-FCGR",
+            name=f"{args.exp_name}_{args.dataset}",
+            # kwargs for wandb.init
+            config=vars(args),
+            tags=tags + [args.transform_input_data, args.exp_name, args.dataset, args.number_for_logger]
+        )
 
     device = "cuda" if torch.cuda.is_available() and args.gpus is not None else "cpu"
-    if isinstance(logger, NeptuneLogger):
-        if logger.api_key == 'your_API_token':
-            print("No Neptune API token defined!")
-            print("Please define Neptune API token or run with the --offline argument.")
-            print("Running without logging...")
-            logger = DummyLogger()
 
     # Main body
-    model = AE_ClusterPipeline(args=args, logger=logger, input_dim=data.data_dim)
+    model = AE_ClusterPipeline(args=args,logger=logger, input_dim=data.data_dim)
+    logger.watch(model, log_freq=100)
     if not args.pretrain:
         load_pretrained(args, model)
     if args.save_checkpoints:
@@ -233,7 +237,7 @@ def train_clusternet_with_alternations():
 
     max_epochs = args.epoch * (args.number_of_ae_alternations - 1) + 1
 
-    trainer = pl.Trainer(logger=logger, max_epochs=max_epochs, gpus=args.gpus, num_sanity_val_steps=0, checkpoint_callback=False)
+    trainer = pl.Trainer(max_epochs=max_epochs, gpus=args.gpus, num_sanity_val_steps=0, checkpoint_callback=False, logger=logger)
     trainer.fit(model, train_loader, val_loader)
 
     model.to(device=device)
@@ -254,7 +258,7 @@ def train_clusternet_with_alternations():
         # save predictions (current format is numpy array)
         #np.save(args.output_dir + f"/{save_name}_pred.npy", pred)
         name_counter = save_npz_file_for_analysis(args.output_dir, save_name, latent_embeddings.cpu().numpy(), pred, dataset.targets.numpy(), args, tags)
-        logger.log_metric(f"{['train','test'][i]}/results_saved", 1)
+        #logger.log_text(f"{['train','test'][i]}/results_saved", 1)
         net_pred.append(pred)
         if args.use_labels_for_eval:
             # Use the labels to evaluate the model
@@ -309,7 +313,12 @@ def save_npz_file_for_analysis(output_dir, save_name, latent_embeddings, pred, l
         save_path = os.path.join(output_dir,npz_name)
         counter+=1
 
-    np.savez(f"{save_path}.npz", features=latent_embeddings, labels=labels, predLabels=pred, runInfo=runInfo)
+    np.savez(f"{save_path}.npz", features=latent_embeddings, labels=labels, predLabels=pred)
+
+    with open(f"{save_path}_runInfo.json", "w") as f:
+        json.dump(runInfo, f)
+
+
     # Within a folder called "completeRuns", save a dummy file with the complete
     # This is used to check if a run is complete
     try:

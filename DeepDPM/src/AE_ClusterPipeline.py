@@ -14,10 +14,10 @@ from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics import normalized_mutual_info_score
 import pytorch_lightning as pl
 
-from src.clustering_models.clusternet import ClusterNet
-from src.feature_extractors.feature_extractor import FeatureExtractor
-from src.clustering_models.clusternet_modules.utils.training_utils import training_utils
-from src.clustering_models.clusternet_modules.utils.plotting_utils import PlotUtils
+from DeepDPM.src.clustering_models.clusternet import ClusterNet
+from DeepDPM.src.feature_extractors.feature_extractor import FeatureExtractor
+from DeepDPM.src.clustering_models.clusternet_modules.utils.training_utils import training_utils
+from DeepDPM.src.clustering_models.clusternet_modules.utils.plotting_utils import PlotUtils
 
 
 '''

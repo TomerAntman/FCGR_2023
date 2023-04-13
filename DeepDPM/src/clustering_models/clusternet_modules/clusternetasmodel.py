@@ -14,22 +14,22 @@ import pytorch_lightning as pl
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics import adjusted_rand_score, silhouette_score, adjusted_mutual_info_score, homogeneity_completeness_v_measure
 
-from src.clustering_models.clusternet_modules.utils.plotting_utils import PlotUtils
-from src.clustering_models.clusternet_modules.utils.training_utils import training_utils
-from src.clustering_models.clusternet_modules.utils.clustering_utils.priors import (
+from DeepDPM.src.clustering_models.clusternet_modules.utils.plotting_utils import PlotUtils
+from DeepDPM.src.clustering_models.clusternet_modules.utils.training_utils import training_utils
+from DeepDPM.src.clustering_models.clusternet_modules.utils.clustering_utils.priors import (
     Priors,
 )
-from src.clustering_models.clusternet_modules.utils.clustering_utils.clustering_operations import (
+from DeepDPM.src.clustering_models.clusternet_modules.utils.clustering_utils.clustering_operations import (
     init_mus_and_covs,
     compute_data_covs_hard_assignment,
 )
-from src.clustering_models.clusternet_modules.utils.clustering_utils.split_merge_operations import (
+from DeepDPM.src.clustering_models.clusternet_modules.utils.clustering_utils.split_merge_operations import (
     update_models_parameters_split,
     split_step,
     merge_step,
     update_models_parameters_merge,
 )
-from src.clustering_models.clusternet_modules.models.Classifiers import MLP_Classifier, Subclustering_net
+from DeepDPM.src.clustering_models.clusternet_modules.models.Classifiers import MLP_Classifier, Subclustering_net
 
 
 class ClusterNetModel(pl.LightningModule):

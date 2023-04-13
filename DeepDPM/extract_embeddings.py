@@ -6,11 +6,11 @@ import torch
 import numpy as np
 import os
 import glob
-# from src.datasets import MNIST, CIFAR10, USPS
-# from src.embbeded_datasets import embbededDataset
-from src.AE_ClusterPipeline import AE_ClusterPipeline
-from src.datasets import CustomDataset
-from src.clustering_models.clusternet_modules.clusternetasmodel import ClusterNetModel
+# from DeepDPM.src.datasets import MNIST, CIFAR10, USPS
+# from DeepDPM.src.embbeded_datasets import embbededDataset
+from DeepDPM.src.AE_ClusterPipeline import AE_ClusterPipeline
+from DeepDPM.src.datasets import CustomDataset
+from DeepDPM.src.clustering_models.clusternet_modules.clusternetasmodel import ClusterNetModel
 print(f"Loading dependencies took {time.time() - t0} seconds")
 
 def parse_minimal_args(parser):
