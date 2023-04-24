@@ -4,7 +4,7 @@
 # Copyright (c) 2022 Meitar Ronen 
 #
 
-from DeepDPM.src.feature_extractors.autoencoder import AutoEncoder, ConvAutoEncoder, ConvVAE
+from src.feature_extractors.autoencoder import AutoEncoder, ConvAutoEncoder, ConvVAE
 
 import torch
 import torch.nn as nn
@@ -86,13 +86,13 @@ class FeatureExtractor(nn.Module):
 
     def _get_backbone(self):
         if self.args.dataset in ('cifar-10', 'cifar-20'):
-            from DeepDPM.src.feature_extractors.resnet_cifar import resnet18
+            from src.feature_extractors.resnet_cifar import resnet18
             backbone = resnet18()
         elif self.args.dataset == 'stl-10':
-            from DeepDPM.src.feature_extractors.resnet_stl import resnet18
+            from src.feature_extractors.resnet_stl import resnet18
             backbone = resnet18()
         elif 'imagenet' in self.args.dataset:
-            from DeepDPM.src.feature_extractors.resnet import resnet50
+            from src.feature_extractors.resnet import resnet50
             backbone = resnet50()
         return backbone
 

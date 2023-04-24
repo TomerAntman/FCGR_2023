@@ -5,7 +5,7 @@
 #
 
 import pytorch_lightning as pl
-from DeepDPM.src.clustering_models.clusternet_modules.clusternetasmodel import ClusterNetModel
+from src.clustering_models.clusternet_modules.clusternetasmodel import ClusterNetModel
 
 class ClusterNetTrainer:
     def __init__(self, args, init_k, latent_dim, feature_extractor, centers=None, init_num=0):

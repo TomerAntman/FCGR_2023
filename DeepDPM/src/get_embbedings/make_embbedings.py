@@ -10,7 +10,7 @@ import torch.nn as nn
 import argparse
 from src import datasets
 from tqdm import tqdm
-from DeepDPM.src.get_embbedings.imagenet import ImageNetSubset, ImageNet
+from src.get_embbedings.imagenet import ImageNetSubset, ImageNet
 
 
 data_to_class_dict = {

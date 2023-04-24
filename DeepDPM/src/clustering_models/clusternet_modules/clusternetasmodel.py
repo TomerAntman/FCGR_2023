@@ -7,29 +7,29 @@
 from argparse import ArgumentParser
 import numpy as np
 import matplotlib.pyplot as plt
-
+import wandb
 import torch
 from torch import optim
 import pytorch_lightning as pl
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics import adjusted_rand_score, silhouette_score, adjusted_mutual_info_score, homogeneity_completeness_v_measure
 
-from DeepDPM.src.clustering_models.clusternet_modules.utils.plotting_utils import PlotUtils
-from DeepDPM.src.clustering_models.clusternet_modules.utils.training_utils import training_utils
-from DeepDPM.src.clustering_models.clusternet_modules.utils.clustering_utils.priors import (
+from src.clustering_models.clusternet_modules.utils.plotting_utils import PlotUtils
+from src.clustering_models.clusternet_modules.utils.training_utils import training_utils
+from src.clustering_models.clusternet_modules.utils.clustering_utils.priors import (
     Priors,
 )
-from DeepDPM.src.clustering_models.clusternet_modules.utils.clustering_utils.clustering_operations import (
+from src.clustering_models.clusternet_modules.utils.clustering_utils.clustering_operations import (
     init_mus_and_covs,
     compute_data_covs_hard_assignment,
 )
-from DeepDPM.src.clustering_models.clusternet_modules.utils.clustering_utils.split_merge_operations import (
+from src.clustering_models.clusternet_modules.utils.clustering_utils.split_merge_operations import (
     update_models_parameters_split,
     split_step,
     merge_step,
     update_models_parameters_merge,
 )
-from DeepDPM.src.clustering_models.clusternet_modules.models.Classifiers import MLP_Classifier, Subclustering_net
+from src.clustering_models.clusternet_modules.models.Classifiers import MLP_Classifier, Subclustering_net
 
 
 class ClusterNetModel(pl.LightningModule):
@@ -195,8 +195,8 @@ class ClusterNetModel(pl.LightningModule):
             pi=self.pi,
             logger=self.logger
         )
-        self.log({"cluster_net_train/train/cluster_loss":
-            self.hparams.cluster_loss_weight * cluster_loss})#,
+        self.log("cluster_net_train/train/cluster_loss",
+            self.hparams.cluster_loss_weight * cluster_loss)#,
         #     on_step=True,
         #     on_epoch=False,
         # )
@@ -219,9 +219,7 @@ class ClusterNetModel(pl.LightningModule):
                     else None,
                     pis_sub=self.pi_sub
                 )
-                self.log(
-                    {"cluster_net_train/train/subcluster_loss":
-                    self.hparams.subcluster_loss_weight * subcluster_loss})#,
+                self.log("cluster_net_train/train/subcluster_loss", self.hparams.subcluster_loss_weight * subcluster_loss)#,
                 #     on_step=True,
                 #     on_epoch=True,
                 # )
@@ -281,7 +279,7 @@ class ClusterNetModel(pl.LightningModule):
                 pi=self.pi
             )
             loss = self.hparams.cluster_loss_weight * cluster_loss
-            self.log({"cluster_net_train/val/cluster_loss": loss})
+            self.log("cluster_net_train/val/cluster_loss", loss)
 
             if self.current_epoch >= self.hparams.start_sub_clustering and not self.hparams.ignore_subclusters:
                 subclusters = self.subcluster(codes, logits)
@@ -297,7 +295,7 @@ class ClusterNetModel(pl.LightningModule):
                     else None,
                     pis_sub=self.pi_sub
                 )
-                self.log({"cluster_net_train/val/subcluster_loss": subcluster_loss})
+                self.log("cluster_net_train/val/subcluster_loss", subcluster_loss)
                 loss += self.hparams.subcluster_loss_weight * subcluster_loss
             else:
                 subclusters = None
@@ -326,6 +324,7 @@ class ClusterNetModel(pl.LightningModule):
 
         return {"loss": loss}
 
+    # TODO: consider working with "on_train_epoch_end" instead of "train_epoch_end" according to this discussion: https://github.com/Lightning-AI/lightning/discussions/14491
     def training_epoch_end(self, outputs):
         """Perform logging operations and computes the clusters' and the subclusters' centers.
         Also perform split and merges steps
@@ -413,10 +412,10 @@ class ClusterNetModel(pl.LightningModule):
             else:
                 clus_losses = outputs
             avg_clus_loss = torch.stack([x["loss"] for x in clus_losses]).mean()
-            self.log({"cluster_net_train/train/avg_cluster_loss": avg_clus_loss})
+            self.log("cluster_net_train/train/avg_cluster_loss", avg_clus_loss)
             if self.current_epoch >= self.hparams.start_sub_clustering and not self.hparams.ignore_subclusters:
                 avg_subclus_loss = torch.stack([x["loss"] for x in subclus_losses]).mean()
-                self.log({"cluster_net_train/train/avg_subcluster_loss": avg_subclus_loss})
+                self.log("cluster_net_train/train/avg_subcluster_loss", avg_subclus_loss)
 
             # Compute mus and perform splits/merges
             perform_split = self.training_utils.should_perform_split(
@@ -561,7 +560,7 @@ class ClusterNetModel(pl.LightningModule):
     def validation_epoch_end(self, outputs):
         # Take mean of all batch losses
         avg_loss = torch.stack([x["loss"] for x in outputs]).mean()
-        self.log({"cluster_net_train/val/avg_val_loss": avg_loss})
+        self.log("cluster_net_train/val/avg_val_loss", avg_loss)
         if self.current_training_stage != "gather_codes" and self.hparams.evaluate_every_n_epochs and self.current_epoch % self.hparams.evaluate_every_n_epochs == 0:
             z = self.val_resp.argmax(axis=1).cpu()
             nmi = normalized_mutual_info_score(
@@ -897,15 +896,20 @@ class ClusterNetModel(pl.LightningModule):
             n_epoch=self.current_epoch,
             K=len(torch.unique(gt[stage])),
         )
+        self.logger.experiment.log({f"cluster_net_train/{stage}/clusters_fig_gt_labels":
+                                        [wandb.Image(fig, caption="Clusters with true labels")]})
         plt.close(fig)
-        self.logger.log_image(key = f"cluster_net_train/{stage}/clusters_fig_gt_labels", images=[fig])
+
+        #self.logger.log_image(key = f"cluster_net_train/{stage}/clusters_fig_gt_labels", images=[fig])
         fig = self.plot_utils.plot_clusters_colored_by_net(
             samples=self.codes,
             y_net=cluster_net_labels,
             n_epoch=self.current_epoch,
             K=len(torch.unique(cluster_net_labels)),
         )
-        self.logger.log_image(key = "cluster_net_train/train/clusters_fig_net_labels", images=[fig])
+        self.logger.experiment.log({f"cluster_net_train/train/clusters_fig_net_labels":
+                                        [wandb.Image(fig, caption="Clusters with predicted labels")]})
+        #self.logger.log_image(key = "cluster_net_train/train/clusters_fig_net_labels", images=[fig])
         plt.close(fig)
 
     def log_clustering_metrics(self, stage="train"):

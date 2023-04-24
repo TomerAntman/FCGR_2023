@@ -8,7 +8,7 @@ import numpy as np
 from joblib import Parallel, delayed
 import torch
 
-from DeepDPM.src.clustering_models.clusternet_modules.clusternet_trainer import (
+from src.clustering_models.clusternet_modules.clusternet_trainer import (
     ClusterNetTrainer,
 )
 

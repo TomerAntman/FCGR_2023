@@ -7,7 +7,7 @@
 from sklearn.manifold import TSNE
 # import umap.umap_ as umap
 from matplotlib import pyplot as plt
-
+import os
 import numpy as np
 import torch
 import seaborn as sns
@@ -16,6 +16,7 @@ from matplotlib.patches import Ellipse
 import matplotlib as mpl
 
 import pandas as pd
+import wandb
 
 class PlotUtils:
     def __init__(self, hparams, logger=None, samples=None):
@@ -417,7 +418,9 @@ class PlotUtils:
             plt.title(f"the eigenvalues of cov {i} to be split, epoch {epoch}")
             plt.xlabel("Eigenvalues inds")
             plt.ylabel("Eigenvalues")
-            self.logger.log_image(key = f"cluster_net_train/train/epoch {epoch}/eigenvalues_cov_{i}", images=[fig])
+            self.logger.experiment.log({f"cluster_net_train/train/epoch {epoch}/eigenvalues_cov_{i}":
+                                            [wandb.Image(fig, caption="Eigenvalues of cov matrix")]})
+            #self.logger.log_image(key = f"cluster_net_train/train/epoch {epoch}/eigenvalues_cov_{i}", images=[fig])
             plt.close(fig)
 
     def update_colors(self, split, split_inds, merge_inds):
@@ -444,4 +447,48 @@ class PlotUtils:
             [colors_not_merged, self.colors[mus_ind_merge[:, 0]]]
         )
 
+#### Tomer's code ####
+def get_colors(n, rev=False):
+    """
+    Get a list of n colors from seaborn's color palettes.
+    """
+    ColorPalette = []
+    variations = ["bright", "colorblind", "pastel", "muted", "dark"] if n<=54 else ["bright", "colorblind","deep", "pastel", "muted", "dark"]
+    if rev:
+        variations = variations[::-1].copy()
+    for var in variations:
+        # drop out the gray colors
+        added = sns.color_palette(var)[:7] + sns.color_palette(var)[8:]
+        ColorPalette += added
 
+    colors_chosen = ColorPalette[:n]
+    return colors_chosen
+def TSNE_comparison(latent_x, true_labels, predictions, current_epoch, alt_num,logger, is_final=False):
+    X_embedded = TSNE(n_components=2, learning_rate='auto', metric='cosine').fit_transform(latent_x)
+    df = pd.DataFrame({'x':X_embedded[:,0],'y':X_embedded[:,1], 'trueNumLabels':true_labels, 'predLabels':predictions}).sort_values(by=['trueNumLabels'])
+    pallette1 = get_colors(len(np.unique(df['trueNumLabels'])), rev=False)
+    pallette2 = get_colors(len(np.unique(df['predLabels'])), rev=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8), dpi=72)
+    fig.subplots_adjust(top=0.8)
+    # AX1
+    g1 = sns.scatterplot(data=df, x='x', y='y', hue='trueNumLabels', alpha=0.3, s=18, ax=ax1, palette=pallette1)
+    g1.set(xticklabels=[], xticks=[], yticks=[], yticklabels=[])
+    ax1.set_title('True')
+    ax1.set(xlabel=' ', ylabel=' ')
+    ax1.legend(loc='upper left', bbox_to_anchor=(0, -0.01), ncol=1, title='True labels', title_fontsize=20, fontsize=15)
+    # AX2
+    g2 = sns.scatterplot(data=df, x='x', y='y', hue='predLabels', alpha=0.3, s=18, ax=ax2, palette=pallette2)
+    g2.set(xticklabels=[], xticks=[], yticks=[], yticklabels=[])
+    ax2.set_title('DeepDPM')
+    ax2.set(xlabel=' ', ylabel=' ')
+    ax2.legend(loc='upper left', bbox_to_anchor=(0, -0.01), ncol=1, title='Predicted labels', title_fontsize=20, fontsize=15)
+    plt.tight_layout()
+    # fig title:
+    fig.suptitle(f"Epoch: {current_epoch}", fontsize=15, y=0.98, x=0.15)
+    if is_final:
+        logger.experiment.log({f"Embeddings/Cluster_Initialization_{alt_num}_final":
+                                    [wandb.Image(fig, caption="Embeddings of the clusters")]})
+    else:
+        logger.experiment.log({f"Embeddings/Cluster_Initialization_{alt_num}":
+                                        [wandb.Image(fig, caption="Embeddings of the clusters")]})
+    plt.close(fig)

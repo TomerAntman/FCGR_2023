@@ -14,10 +14,10 @@ from sklearn.metrics import normalized_mutual_info_score as NMI
 from sklearn.metrics import adjusted_rand_score as ARI
 import numpy as np
 
-from DeepDPM.src.datasets import CustomDataset
-from DeepDPM.src.datasets import GMM_dataset
-from DeepDPM.src.clustering_models.clusternet_modules.clusternetasmodel import ClusterNetModel
-from DeepDPM.src.utils import check_args, cluster_acc
+from src.datasets import CustomDataset
+from src.datasets import GMM_dataset
+from src.clustering_models.clusternet_modules.clusternetasmodel import ClusterNetModel
+from src.utils import check_args, cluster_acc
 
 
 def parse_minimal_args(parser):
@@ -65,6 +65,11 @@ def parse_minimal_args(parser):
     )
     parser.add_argument(
         "--save_checkpoints", type=bool, default=False
+    )
+    parser.add_argument(
+        "--plot_embeddings",
+        action = "store_true",
+        help="whether to plot embeddings"
     )
     parser.add_argument(
         "--exp_name", type=str, default="default_exp"

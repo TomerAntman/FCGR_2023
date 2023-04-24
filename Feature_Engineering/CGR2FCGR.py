@@ -48,6 +48,7 @@ The CGR arrays have 3 columns: X, Y, IPDs (the IPDs are processed and normalized
 
 #%% Imports
 import os
+import sys
 import numpy as np
 import yaml
 #from Feature_Engineering.FCGR_parser import config_parsing, Parser
@@ -159,7 +160,7 @@ def CGR2FCGR(CGR_array, kmer_size,IPD_stratification,IPD_stride, IPD_r, channels
 
     return FCGR_array
 
-def FCGR_normalization(FCGR_array, normalization_method = 'sum_max'):
+def FCGR_normalization(FCGR_array, normalization_method = 'sum'):
     # FCGR_normalization: "by_sum" or "by_max" or "by_sum_and_max"
     # by_sum: divide by the sum of all bins to get the frequency (eliminating the effect the length of the sequence)
     # by_max: divide by the maximum value of the FCGR array, stretching the values between 0 and 1
@@ -177,7 +178,7 @@ def FCGR_normalization(FCGR_array, normalization_method = 'sum_max'):
 
     return FCGR_array_normed
 
-def plot_FCGR(FCGR_array, FCGR_folder, read_name):
+def plot_FCGR(FCGR_array, FCGR_folder, read_name, channels = 3):
     os.makedirs(os.path.join(FCGR_folder, 'images'), exist_ok=True)
     save_path = os.path.join(FCGR_folder, 'images', f"{read_name}.png")
     fig = plt.figure(frameon=False)
@@ -185,7 +186,10 @@ def plot_FCGR(FCGR_array, FCGR_folder, read_name):
     ax = plt.Axes(fig, [0., 0., 1., 1.])
     ax.set_axis_off()
     fig.add_axes(ax)
-    ax.imshow(FCGR_array, vmin=0, vmax=1, aspect='auto')
+    if channels == 1:
+        ax.imshow(FCGR_array, vmin=0, vmax=1, aspect='auto', cmap='gray')
+    else:
+        ax.imshow(FCGR_array, vmin=0, vmax=1, aspect='auto')
     fig.savefig(save_path, dpi=200)
 
 
@@ -253,12 +257,12 @@ def filter_CGR(CGR_arrays, read_lengths, ecs, read_names, tags_filter, read_leng
 #%% Main function
 def main(CGR_arrays, read_names, read_lengths, ecs,
          FCGR_folder, IPD_stride, IPD_r, channels, IPD_stratification,
-         save_as_npy, save_as_npz, plot_examples):
+         save_as_npy, save_as_npz, plot_examples, do_tqdm = True):
     """
     :param CGR_arrays: the CGR arrays for all the reads (np.array). 4 columns: x, y, IPDs, base (utf-8, not str)
     :param FCGR_folder: the folder where the FCGR arrays will be saved (string)
     :param IPD_stride: the stride for the IPD (int)
-    :param IPD_r: the r for the IPD (int)
+    :param IPD_r: the r for the IPD (float)
     :param channels: the number of channels for the IPD (int)
     :param IPD_stratification: the method for the FCGR (string)
     :param save_as_npy: whether to save the FCGR arrays as npy files (bool)
@@ -274,9 +278,9 @@ def main(CGR_arrays, read_names, read_lengths, ecs,
         worst_ind = np.argmin(read_score)
 
     # create the FCGR arrays:
-
+    CGR_iterator = enumerate(tqdm(CGR_arrays)) if do_tqdm else enumerate(CGR_arrays)
     FCGR_arrays = []
-    for i, CGR_array in enumerate(tqdm(CGR_arrays)):
+    for i, CGR_array in CGR_iterator:
         FCGR_array = CGR2FCGR(CGR_array, kmer_size, IPD_stratification, IPD_stride, IPD_r, channels)
         if save_as_npy:
             np.save(os.path.join(FCGR_folder, f"{read_names[i]}.npy"), FCGR_array)
@@ -284,10 +288,10 @@ def main(CGR_arrays, read_names, read_lengths, ecs,
             FCGR_arrays.append(FCGR_array)
 
         if plot_examples and (i == best_ind or i == worst_ind):
-            for norm_method in ['sum_max']:#, 'max', 'sum', 'l2_norm']:
+            for norm_method in ['sum']:#['sum_max', 'max', 'sum', 'l2_norm']:
                 normed_array = FCGR_normalization(FCGR_array, normalization_method = norm_method)
                 name_for_save = f"{read_names[i]}_{norm_method}"
-                plot_FCGR(normed_array, FCGR_folder, read_name=name_for_save)
+                plot_FCGR(normed_array, FCGR_folder, read_name=name_for_save, channels=channels)
 
     # save the FCGR arrays:
     if save_as_npz:
@@ -300,6 +304,7 @@ def main(CGR_arrays, read_names, read_lengths, ecs,
 
 
 #%% Parse the arguments and crearw files/folders
+
 def Parser(params, get_config=False):
     parser = argparse.ArgumentParser(description='Create FCGR arrays from CGR arrays')
     # start by parsing the config path and the mode (isolate or community)
@@ -318,7 +323,7 @@ def Parser(params, get_config=False):
     parser.add_argument("--isolate_or_community", "--icm", #icm stands for "Isolate or Community Mode"
                         type=str,
                         #options=["isolate", "community"],
-                        default=params['mode'],
+                        default=params['isolate_or_community'],
                         help="Isolate or Community Mode. Default is 'isolate'."
                         )
     # else, get these two arguments and continue parsing
@@ -336,7 +341,7 @@ def Parser(params, get_config=False):
         # output_folder: default is '/home/labs/zeevid/Analyses/2022-HGR/BAM2FCGR' (was '/home/labs/zeevid/Analyses/2022-HGR/HybridIsolates/IPD_CGR')
         parser.add_argument("--output_folder", "--output_path",
                             type=str,
-                            default=params['isolate_paths']['output'],
+                            default=params['isolate_paths']['output_folder'],
                             help="The folder path in which the output folder of the isolate will be saved. Default is in config.yaml file"
                             )
     elif mode == "community":
@@ -354,12 +359,12 @@ def Parser(params, get_config=False):
                         )
     parser.add_argument("--consider_tags",
                         type=str,
-                        default= params['filters']['tags']['consider_tags'], #'ec,np,fn,rq', # effective coverage, number of full-length subreads, forward number of complete passes, Predicted average read quality
+                        default= params['filters']['consider_tags'], #'ec,np,fn,rq', # effective coverage, number of full-length subreads, forward number of complete passes, Predicted average read quality
                         help="Pacbio tags to filter by. Default is 'ec' (effective coverage). Can also include 'np,fn,rq' (number of full-length subreads, forward number of complete passes, Predicted average read quality)"
                         )
     parser.add_argument("--tags_filter", "--tags_threshold",
                         type=str,
-                        default=params['filters']['tags']['tags_filter'],#'10,5,2,0.999',
+                        default=params['filters']['tags_filter'],#'10,5,2,0.999',
                         help="Thresholds for the tags. Default is '10' (ec=10). Can also be something like '10,5,2,0.999' (ec=10, np=5, fn=2, rq=0.999). Needs to match the tags given in the 'consider_tags' argument"
                         )
 
@@ -371,7 +376,7 @@ def Parser(params, get_config=False):
                         default=FCGR_params['hyperparams']['kmer_size'],
                         help="kmer size such as 5. Default is in config.yaml file"
                         )
-    parser.add_argument("--channels","--multichannel", "--ndim",
+    parser.add_argument("--channels","--n_channels","--multichannel", "--ndim",
                     type=int,
                     default=FCGR_params['hyperparams']['channels'],
                     help="number of channels, must be greater or equal to 1. Default is in config.yaml file"
@@ -383,12 +388,12 @@ def Parser(params, get_config=False):
                         )
     parser.add_argument("--fcgr_consider_tags",
                         type=str,
-                        default= FCGR_params['filters']['tags']['consider_tags'],
+                        default= FCGR_params['filters']['consider_tags'],
                         help="Pacbio tags to filter by. Default is 'ec' (effective coverage). Can also include 'np,fn,rq' (number of full-length subreads, forward number of complete passes, Predicted average read quality)"
                         )
     parser.add_argument("--fcgr_tags_filter", "--fcgr_tags_threshold",
                     type=str,
-                    default= FCGR_params['filters']['tags']['tags_filter'],
+                    default= FCGR_params['filters']['tags_filter'],
                     help="Thresholds for the tags. Default is '10' (ec=10). Can also be something like '10,5,2,0.999' (ec=10, np=5, fn=2, rq=0.999). Needs to match the tags given in the 'consider_tags' argument"
                     )
 
@@ -414,12 +419,12 @@ def Parser(params, get_config=False):
 ### Saving options:
     parser.add_argument("--save_as_npy",
                         type=bool,
-                        default=params['save_format']['as_npy'],
+                        default=params['save_format']['save_as_npy'],
                         help="if True, the output will be saved as a .npy file. Default is in config.yaml file"
                         )
     parser.add_argument("--save_as_npz",
                         type=bool,
-                        default=params['save_format']['as_npz'],
+                        default=params['save_format']['save_as_npz'],
                         help="if True, the output will be saved as a .npz file (and also a txt file with the names of the long reads). Default is in config.yaml file"
                         )
     parser.add_argument("--plot_examples",
@@ -432,7 +437,42 @@ def Parser(params, get_config=False):
     args = parser.parse_args()
     return args
 
+def check_sys_argv_content(arguments):
+    """
+    The input is a list generated by sys.argv.
+    The function looks for arguments that are for parsing (start with -- or -).
+    It returns a list of the arguments that are for parsing (remove the -- or -)
+    """
+    given_arguments = []
+    for arg in arguments:
+        if arg.startswith("-"):
+            given_arguments.append(arg.lstrip("-"))
+    return given_arguments
 
+def update_params(args, params, given_args):
+    """
+    If an argument was given (value isn't as appears in the config file), update the params dictionary
+    Class RecordGiven is used to record the given arguments. The config file wasn't used if args.value.was_given==True
+    """
+    # update the params dictionary:
+    params_sections = ['filters', 'save_format']
+    params_sections += ['isolate_paths'] if getattr(args,"isolate_or_community") == 'isolate' else ['community_paths']
+    for section in params_sections: # iterate over the sections in the params file
+        for arg in given_args: # if the argument was given, update the params file
+            if arg in params[section].keys():
+                params[section][arg] = getattr(args, arg)
+
+    # update the params dictionary for FCGR:
+    for arg in given_args:
+        if arg in params['FCGR']['hyperparams'].keys():
+            params['FCGR']['hyperparams'][arg] = getattr(args, arg)
+        elif arg in params['FCGR']['methods'].keys():
+            params['FCGR']['methods'][arg] = getattr(args, arg)
+        elif arg.startswith("fcgr_"): # read_length, consider_tags, tags_filter
+            params['FCGR']['filters'][arg[5:]] = getattr(args, arg)
+
+
+    return params
 def get_tags_filter(args, FCGR=False):
     """
     :param args: arguments from the command line
@@ -462,7 +502,7 @@ def get_parent_folder(isolate, kmer_size, read_length, tags_filter, output_folde
 def create_output_folders(CGR_folder, tags_filter, read_length, kmer_size, IPD_stride, IPD_r, channels, IPD_stratification):
     # 1) create the FCGR folder within the CGR folder, with an ID.
     # make ID and a string with the ID explained:
-    ID2_explained =  f"kmer: {kmer_size}" \
+    ID2_explained =  f"kmer: {kmer_size} \n" \
                      f"IPD stride: {IPD_stride} \n" \
                      f"IPD r: {IPD_r} \n" \
                      f"channels: {channels} \n" \
@@ -496,9 +536,9 @@ def recreate_config_file(params, folder_path):
     This function recreates the config file from the given parameters.
     """
     file_path = os.path.join(folder_path, f'FCGR_config.yaml')
-    if params['mode'] == 'isolate':
+    if params['isolate_or_community'] == 'isolate':
         params = {key: value for key, value in params.items() if "community" not in key}
-    elif params['mode'] == 'community':
+    elif params['isolate_or_community'] == 'community':
         params = {key: value for key, value in params.items() if "isolate" not in key}
     # the params are cleaner now, so we can dump them to the config file:
     with open(file_path, 'w') as file:
@@ -512,6 +552,8 @@ if __name__ == '__main__':
         params = yaml.load(config, Loader=yaml.FullLoader)
 
     args = Parser(params)
+    given_arguments = check_sys_argv_content(sys.argv)
+    params = update_params(args, params, given_arguments)
     # Relevant for FCGR process:
     IPD_stride = args.IPD_stride
     IPD_r = args.IPD_r
@@ -535,6 +577,10 @@ if __name__ == '__main__':
         print(f"The new read_length ({read_length}) is smaller than the read_length used to create the CGR array ({prev_read_length}). The read_length will be set to {prev_read_length}")
         read_length = prev_read_length
     FCGR_folder = create_output_folders(CGR_folder, tags_filter, read_length, kmer_size, IPD_stride, IPD_r, channels, IPD_stratification)
+    # If the FCGR array already exists, quit:
+    if os.path.exists(os.path.join(FCGR_folder, "FCGR.npz")) and os.path.exists(os.path.join(FCGR_folder, "FCGR_read_names.txt")):
+        print(f"The FCGR array already exists in {FCGR_folder}. Quitting.")
+        quit()
 
     # get the CGR array (and the read lengths and ecs), if it exists
     CGR_arrays, read_lengths, ecs, read_names = get_CGR(CGR_folder)

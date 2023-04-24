@@ -54,8 +54,10 @@ import argparse # for parsing the arguments when sending from the command line
 #from FCGR_parser import config_parsing, Parser  # for parsing the config file (local file)
 # from Feature_Engineering.FCGR_parser import config_parsing, Parser  # for parsing the config file (local file)
 from tqdm import tqdm # for progress bar
+import sys
 
 #%% Parse arguments
+
 def Parser(params, get_config=False):
     parser = argparse.ArgumentParser(description='parsing arguments from config file and command line')
     # start by parsing the config path and the mode (isolate or community)
@@ -74,7 +76,7 @@ def Parser(params, get_config=False):
     parser.add_argument("--isolate_or_community", "--icm", #icm stands for "Isolate or Community Mode"
         type=str,
         #options=["isolate", "community"],
-        default=params['mode'],
+        default=params['isolate_or_community'],
         help="Isolate or Community Mode. Default is 'isolate'."
     )
     # else, get these two arguments and continue parsing
@@ -85,7 +87,7 @@ def Parser(params, get_config=False):
     if mode=="isolate":
         parser.add_argument("--home_path", "--isolates_path",
             type=str,
-            default=params['isolate_paths']['home'],
+            default=params['isolate_paths']['home_path'],
             help="The folder path in which the isolates are saved. Default is in config.yaml file"
         )
         # isolate name, one of the folder in the isolates_folder
@@ -97,14 +99,14 @@ def Parser(params, get_config=False):
         # output_folder: default is '/home/labs/zeevid/Analyses/2022-HGR/BAM2FCGR' (was '/home/labs/zeevid/Analyses/2022-HGR/HybridIsolates/IPD_CGR')
         parser.add_argument("--output_folder", "--output_path",
             type=str,
-            default=params['isolate_paths']['output'],
+            default=params['isolate_paths']['output_folder'],
             help="The folder path in which the output folder of the isolate will be saved. Default is in config.yaml file"
         )
 
     elif mode=="community":
         parser.add_argument("--home_path", "--parent_path",
             type=str,
-            default=params['community_paths']['home'],
+            default=params['community_paths']['home_path'],
             help="path to home/parent directory"
         )
         parser.add_argument("--N", "-N",
@@ -119,28 +121,17 @@ def Parser(params, get_config=False):
         )
         parser.add_argument("--bam_folder", "--bam_path",
             type=str,
-            default="BAM_files",
+            default=params['community_paths']['bam_folder'],
             help="Folder name within the 'home_path' (such as 'BAM_files'). The bam file is in it. Default is in config.yaml file"
         )
         parser.add_argument("--output_folder", "--output_path",
             type=str,
-            default=params['community_paths']['output'],
+            default=params['community_paths']['output_folder'],
             help="Folder name within the 'home_path' (such as 'FCGR_files'). The output file will be saved there. Default is in config.yaml file"
         )
     else:
         raise ValueError(f"The mode must be either 'isolate' or 'community'. Got {mode} instead.")
 
-    ### Hyper-parameters parsing:
-    # parser.add_argument("--kmer_size", "-k", "-K",
-    #     type=int,
-    #     default=params['hyperparams']['kmer_size'],
-    #     help="kmer size such as 5. Default is in config.yaml file"
-    # )
-    # parser.add_argument("--channels","--multichannel", "--ndim",
-    #     type=int,
-    #     default=params['hyperparams']['channels'],
-    #     help="number of channels, must be greater or equal to 1. Default is in config.yaml file"
-    # )
     parser.add_argument("--read_length",
         type=int,
         default=params['filters']['read_length'],
@@ -153,30 +144,57 @@ def Parser(params, get_config=False):
     )
     parser.add_argument("--consider_tags",
                         type=str,
-                        default= params['filters']['tags']['consider_tags'], #'ec,np,fn,rq', # effective coverage, number of full-length subreads, forward number of complete passes, Predicted average read quality
+                        default= params['filters']['consider_tags'], #'ec,np,fn,rq', # effective coverage, number of full-length subreads, forward number of complete passes, Predicted average read quality
                         help="Pacbio tags to filter by. Default is 'ec' (effective coverage). Can also include 'np,fn,rq' (number of full-length subreads, forward number of complete passes, Predicted average read quality)"
                         )
     parser.add_argument("--tags_filter", "--tags_threshold",
                         type=str,
-                        default=params['filters']['tags']['tags_filter'],#'10,5,2,0.999',
+                        default=params['filters']['tags_filter'],#'10,5,2,0.999',
                         help="Thresholds for the tags. Default is '10' (ec=10). Can also be something like '10,5,2,0.999' (ec=10, np=5, fn=2, rq=0.999). Needs to match the tags given in the 'consider_tags' argument"
                         )
 
     ### Saving options parsing:
     parser.add_argument("--save_as_npy",
         type=bool,
-        default=params['save_format']['as_npy'],
+        default=params['save_format']['save_as_npy'],
         help="if True, the output will be saved as a .npy file. Default is in config.yaml file"
     )
     parser.add_argument("--save_as_npz",
         type=bool,
-        default=params['save_format']['as_npz'],
+        default=params['save_format']['save_as_npz'],
         help="if True, the output will be saved as a .npz file (and also a txt file with the names of the long reads). Default is in config.yaml file"
     )
 
     ### Parse arguments:
     args = parser.parse_args()
     return args
+
+def check_sys_argv_content(arguments):
+    """
+    The input is a list generated by sys.argv.
+    The function looks for arguments that are for parsing (start with -- or -).
+    It returns a list of the arguments that are for parsing (remove the -- or -)
+    """
+    given_arguments = []
+    for arg in arguments:
+        if arg.startswith("-"):
+            given_arguments.append(arg.lstrip("-"))
+    return given_arguments
+
+def update_params(args, params, given_args):
+    """
+    If an argument was given (value isn't as appears in the config file), update the params dictionary
+    Class RecordGiven is used to record the given arguments. The config file wasn't used if args.value.was_given==True
+    """
+    # update the params dictionary:
+    params_sections = ['filters', 'save_format']
+    params_sections += ['isolate_paths'] if getattr(args,"isolate_or_community") == 'isolate' else ['community_paths']
+    for section in params_sections: # iterate over the sections in the params file
+        for arg in given_args: # if the argument was given, update the params file
+            if arg in params[section].keys():
+                params[section][arg] = getattr(args, arg)
+
+    return params
 
 
 def get_tags_filter(args):
@@ -270,14 +288,18 @@ def isolate_paths(desired_isolate, isolates_folder):
 def recreate_config_file(params, folder_path):
     """
     This function recreates the config file from the given parameters.
+    But if a different value was given (the default value given in the config wasn't used),
+    it will be changed by update_params
     """
+
+    # create the config file
     file_path = os.path.join(folder_path, f'CGR_config.yaml')
     # since this is only for the CGR, remove any keys with "FCGR" in them.
     params = {key: value for key, value in params.items() if "FCGR" not in key}
     # depending on the mode, remove the relevant keys.
-    if params['mode'] == 'isolate':
+    if params['isolate_or_community'] == 'isolate':
         params = {key: value for key, value in params.items() if "community" not in key}
-    elif params['mode'] == 'community':
+    elif params['isolate_or_community'] == 'community':
         params = {key: value for key, value in params.items() if "isolate" not in key}
     # now we have clean params, we can dump them into the config file.
     with open(file_path, 'w') as file:
@@ -348,10 +370,10 @@ def save_CGR_to_npz(CGR_array_dict, output_folder, file_name="CGR_array"):
     print(f"Saved {file_name}_read_names.txt to {output_folder}")
 
 #%% Main Function
-def main(bam_iterator, read_length, tags_filter,max_num_reads, output_folder, save_as_npy=False, save_as_npz=True):
+def main(bam_iterator, read_length, tags_filter,max_num_reads, output_folder, save_as_npy=False, save_as_npz=True, do_tqdm = False):
     counter = 0
     array_dict = {}
-    pbar = tqdm(bam_iterator) # progress bar
+    pbar = tqdm(bam_iterator) if do_tqdm else bam_iterator # progress bar
     for aln in pbar: # aln is a pysam.AlignedSegment object
         iteration = bam_iteration(aln, read_length, tags_filter) # get the sequence, IPDs and name of the read
         # if iteration is type str, it means that the read was not processed
@@ -393,7 +415,8 @@ def main(bam_iterator, read_length, tags_filter,max_num_reads, output_folder, sa
         counter += 1
         if counter == max_num_reads:
             break
-        pbar.set_postfix({"Processed reads": counter})
+        if do_tqdm:
+            pbar.set_postfix({"Processed reads": counter})
 
     if save_as_npz:
         save_CGR_to_npz(array_dict, output_folder)
@@ -409,6 +432,8 @@ if __name__ == '__main__':
         params = yaml.load(config, Loader=yaml.FullLoader)
 
     args = Parser(params)
+    given_arguments = check_sys_argv_content(sys.argv)
+    params = update_params(args, params, given_arguments) # update the params file with the new parameters
     # convert args to variables
     tags_filter = get_tags_filter(args)
     read_length = args.read_length

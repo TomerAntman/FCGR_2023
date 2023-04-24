@@ -12,7 +12,7 @@ from scipy.optimize import linear_sum_assignment as linear_assignment
 from torchvision.utils import save_image, make_grid
 
 
-from DeepDPM.src.clustering_models.clusternet_modules.utils.clustering_utils.clustering_operations import (
+from src.clustering_models.clusternet_modules.utils.clustering_utils.clustering_operations import (
     compute_pi_k,
     compute_mus,
     compute_covs,

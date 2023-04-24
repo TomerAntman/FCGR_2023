@@ -3,7 +3,7 @@
 #
 # Copyright (c) 2022 Meitar Ronen
 #
-
+import os
 import torch
 import numpy as np
 import torch.nn as nn
@@ -14,12 +14,12 @@ from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics import normalized_mutual_info_score
 import pytorch_lightning as pl
 
-from DeepDPM.src.clustering_models.clusternet import ClusterNet
-from DeepDPM.src.feature_extractors.feature_extractor import FeatureExtractor
-from DeepDPM.src.clustering_models.clusternet_modules.utils.training_utils import training_utils
-from DeepDPM.src.clustering_models.clusternet_modules.utils.plotting_utils import PlotUtils
+from src.clustering_models.clusternet import ClusterNet
+from src.feature_extractors.feature_extractor import FeatureExtractor
+from src.clustering_models.clusternet_modules.utils.training_utils import training_utils
+from src.clustering_models.clusternet_modules.utils.plotting_utils import PlotUtils, TSNE_comparison
 
-
+import wandb
 '''
 Based on the implementation from (https://github.com/xuyxu/Deep-Clustering-Network)
 to "Towards k-means-friendly spaces: Simultaneous deep learning and clustering", Yang et al. ICML 2017:
@@ -120,7 +120,18 @@ class AE_ClusterPipeline(pl.LightningModule):
         if verbose:
             print(f"========== Alternation {self.init_clusternet_num}: Running DeepDPM clustering ==========\n")
         if self.args.clustering == "cluster_net":
+            if self.args.plot_embeddings and self.init_clusternet_num==0:
+                latent_x = self.feature_extractor(self.train_dataloader().dataset.data.to(device=self.device), latent=True).detach().cpu().numpy()
+                #clustering_module = self.clustering.model.cluster_model
+                #predicted_labels = clustering_module(self.train_dataloader().dataset.to(device=self.device).float()).argmax(axis=1).cpu().numpy()
+                true_labels = self.train_dataloader().dataset.targets.detach().cpu().numpy()
+                # all the labels are 0 (create a numpy array of zeros the length of latent_X)
+                predicted_labels = np.zeros(shape = true_labels.shape).astype(int)
+                TSNE_comparison(latent_x, true_labels, predicted_labels, current_epoch=self.current_epoch, alt_num=self.init_clusternet_num, logger=self.logger)
+                #self.plot_utils.TSNE_comparison(latent_x=latent_X, true_labels=self.train_gt, predictions=predicted_labels)
+            #### THIS IS THE MOST IMPORTANT lINE ####
             self.clustering.init_cluster(self.train_dataloader(), self.val_dataloader(), logger=self.logger, centers=centers, init_num=self.init_clusternet_num)
+            ########################################
             self.n_clusters = self.clustering.n_clusters
             if self.args.save_checkpoints:
                 # Checkpoint
@@ -138,10 +149,19 @@ class AE_ClusterPipeline(pl.LightningModule):
                 save_dict['epoch'] = clustering_module.current_epoch
                 save_dict['alt_num'] = self.init_clusternet_num
                 torch.save(save_dict, f'./saved_models/{self.args.dataset}/{self.args.exp_name}/alt_{self.init_clusternet_num}_checkpoint.pth.tar')
-            self.init_clusternet_num += 1
-            self.log({"alt_num": self.init_clusternet_num})
 
-        else:
+            if self.args.plot_embeddings:
+                latent_X = self.feature_extractor(self.train_dataloader().dataset.data.to(device=self.device), latent=True).detach().cpu().numpy()
+                clustering_module = self.clustering.model.cluster_model
+                predicted_labels = clustering_module(self.train_dataloader().dataset.data.to(device=self.device).float()).argmax(axis=1).cpu().numpy()
+                true_labels = self.train_dataloader().dataset.targets.detach().cpu().numpy()
+                TSNE_comparison(latent_X, true_labels, predicted_labels, current_epoch=self.current_epoch, alt_num=self.init_clusternet_num, logger=self.logger)
+
+            self.init_clusternet_num += 1
+            self.log("alt_num", self.init_clusternet_num)
+
+
+        else: # if self.args.clustering == "kmeans":
             batch_X, batch_Y = [], []
             for data, labels in self.train_dataloader():
                 batch_size = data.size()[0]
@@ -156,7 +176,7 @@ class AE_ClusterPipeline(pl.LightningModule):
             if self.args.evaluate_every_n_epochs and self.current_epoch % self.args.evaluate_every_n_epochs == 0:
                 y_pred = self.clustering.update_assign(torch.from_numpy(batch_X))
                 init_nmi = normalized_mutual_info_score(batch_Y.numpy(), y_pred.argmax(-1))
-                self.log({"train/k_means_init_nmi": init_nmi})
+                self.log("train/k_means_init_nmi", init_nmi)
 
         if verbose:
             print("========== End initializing clusters ==========\n")
@@ -185,33 +205,49 @@ class AE_ClusterPipeline(pl.LightningModule):
         # reshape the images to be the original size by dividing the second dimension by 3 (3 channels) and taking the square root.
         # so if the dim is 3072, the image is 32x32x3.
         # The image is already (H, W, C) so we don't need to permute the dimensions.
-        if self.args.is_image and ("train" in self.stage) and self.batch_idx == 0 and self.current_epoch in [5, 10, 15, 20, 25, 30, 35, 40, 50, 100, 300, 500]:
+        if self.args.is_image and ("train" in self.stage) and self.batch_idx == 0 and self.current_epoch in [0, 5, 50, 100, 300, 500]:
             H = W = int(np.sqrt(x.shape[1] / self.args.n_channels))
             C = self.args.n_channels
             #H, W, C = int(np.sqrt(X.shape[1] / 3)), int(np.sqrt(X.shape[1] / 3)), 3
             X_plot = x[:5].detach().cpu().view(-1, H, W, C).numpy()
             rec_X_plot = rec_X[:5].detach().cpu().view(-1, H, W, C).numpy()
 
-            # add 2 rows as breaks between images
-            break_rows = np.ones((2,W,C)) # if W=32, break_rows.shape = (2, 32, 3)
-            X_plot_stacked = np.vstack([np.vstack([X_plot[i], break_rows]) for i in range(5)])
-            rec_X_plot_stacked = np.vstack([np.vstack([rec_X_plot[i], break_rows]) for i in range(5)])
+            # add 2 colums as breaks between images
+            #break_rows = np.ones((2,W,C)) # if W=32, break_rows.shape = (2, 32, 3)
+            break_cols = np.ones((H,2,C))
+            X_plot_stacked = np.hstack([np.hstack([X_plot[i], break_cols]) for i in range(5)])
+            rec_X_plot_stacked = np.hstack([np.hstack([rec_X_plot[i], break_cols]) for i in range(5)])
+            # value above 1 or below 0 are clipped. I'm okay with clipping values in the range of [-0.5, 1.5] because it's just for visualization.
+            # Also, this notion is only important for the last epochs, when the model is already trained. So the assertion is only for the epoch 100 and above.
+            if self.current_epoch >= 100:
+                assert np.all(X_plot_stacked <= 1.5) and np.all(X_plot_stacked >= -0.5) and np.all(rec_X_plot_stacked <= 1.5) and np.all(rec_X_plot_stacked >= -0.5), \
+                    f"Epoch is {self.current_epoch}. X_plot_stacked and rec_X_plot_stacked should be in the range of [-0.5, 1.5]. \n" \
+                    f"Got X_plot_stacked: [{X_plot_stacked.min()},{X_plot_stacked.max()}] and rec_X_plot_stacked: [{rec_X_plot_stacked.min()},{rec_X_plot_stacked.max()}]"
 
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5, 15), tight_layout=True)
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 5), tight_layout=True)
             fig.subplots_adjust(top=0.8)
-            ax1.set_title("Original")
+            #ax1.set_title("Original")
             if C==3: # RGB
                 ax1.imshow(X_plot_stacked)
                 ax2.imshow(rec_X_plot_stacked)
             else: # grayscale
                 ax1.imshow(X_plot_stacked, cmap='gray', vmin=0, vmax=1)
                 ax2.imshow(rec_X_plot_stacked, cmap='gray', vmin=0, vmax=1)
-            ax1.axis('off')
-            ax2.set_title("Reconstructed")
+
+            ax1.set_ylabel("Original", labelpad=20, fontdict={'fontsize': 20})
+            ax2.set_ylabel("Reconstructed", labelpad=20, fontdict={'fontsize': 20})
+            for ax in [ax1, ax2]:
+                ax.set_xticks([])
+                ax.set_yticks([])
+                for key, spine in ax.spines.items():
+                    spine.set_visible(False)
+            #ax1.axis('off')
+            #ax2.set_title("Reconstructed")
             #ax2.imshow(rec_X_plot_stacked)
-            ax2.axis('off')
+            #ax2.axis('off')
             fig.suptitle(f"Epoch: {self.current_epoch}", y=0.95)
-            self.logger.log_image(key = f"Reconstruction/{self.stage}", images=[fig]) #/{self.current_epoch}
+            self.logger.experiment.log({f"Reconstruction/{self.stage}":[wandb.Image(fig, caption="Reconstructed by AE")]})
+            #self.logger.log_image(key = f"Reconstruction/{self.stage}", images=[fig]) #/{self.current_epoch}
             plt.close(fig)
         # if self.args.ConvVAE:
         #     loss = self.feature_extractor.get_loss(rec_X, x, mu, log_var)
@@ -243,33 +279,44 @@ class AE_ClusterPipeline(pl.LightningModule):
         # so if the dim is 3072, the image is 32x32x3.
         # The image is already (H, W, C) so we don't need to permute the dimensions.
         rec_X = self.feature_extractor(x)
-        if self.args.is_image and self.batch_idx==0 and self.current_epoch % 10 == 0:
+        if self.args.is_image and self.batch_idx==0 and self.current_epoch % 10 == 0 and self.current_epoch in [0, 5, 50, 100, 300, 500]:
             H = W = int(np.sqrt(x.shape[1] / self.args.n_channels))
             C = self.args.n_channels
             #H, W, C = int(np.sqrt(X.shape[1] / 3)), int(np.sqrt(X.shape[1] / 3)), 3
             X_plot = x[:5].detach().cpu().view(-1, H, W, C).numpy()
             rec_X_plot = rec_X[:5].detach().cpu().view(-1, H, W, C).numpy()
 
-            # add 2 rows as breaks between images
-            break_rows = np.ones((2,W,C)) # if W=32, break_rows.shape = (2, 32, 3)
-            X_plot_stacked = np.vstack([np.vstack([X_plot[i], break_rows]) for i in range(5)])
-            rec_X_plot_stacked = np.vstack([np.vstack([rec_X_plot[i], break_rows]) for i in range(5)])
+            # add 2 columns as breaks between images
+            break_cols = np.ones((H,2,C))
+            X_plot_stacked = np.hstack([np.hstack([X_plot[i], break_cols]) for i in range(5)])
+            rec_X_plot_stacked = np.hstack([np.hstack([rec_X_plot[i], break_cols]) for i in range(5)])
+            # value above 1 or below 0 are clipped. I'm okay with clipping values in the range of [-0.5, 1.5] because it's just for visualization.
+            # Also, this notion is only important for the last epochs, when the model is already trained. So the assertion is only for the epoch 100 and above.
+            if self.current_epoch >= 100:
+                assert np.all(X_plot_stacked <= 1.5) and np.all(X_plot_stacked >= -0.5) and np.all(rec_X_plot_stacked <= 1.5) and np.all(rec_X_plot_stacked >= -0.5), \
+                    f"Epoch is {self.current_epoch}. X_plot_stacked and rec_X_plot_stacked should be in the range of [-0.5, 1.5]. \n" \
+                    f"Got X_plot_stacked: [{X_plot_stacked.min()},{X_plot_stacked.max()}] and rec_X_plot_stacked: [{rec_X_plot_stacked.min()},{rec_X_plot_stacked.max()}]"
 
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(5, 15), tight_layout=True)
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 5), tight_layout=True)
             fig.subplots_adjust(top=0.8)
-            ax1.set_title("Original")
+            #ax1.set_title("Original")
             if C==3: # RGB
                 ax1.imshow(X_plot_stacked)
                 ax2.imshow(rec_X_plot_stacked)
             else: # grayscale
                 ax1.imshow(X_plot_stacked, cmap='gray', vmin=0, vmax=1)
                 ax2.imshow(rec_X_plot_stacked, cmap='gray', vmin=0, vmax=1)
-            ax1.axis('off')
-            ax2.set_title("Reconstructed")
-            #ax2.imshow(rec_X_plot_stacked)
-            ax2.axis('off')
+
+            ax1.set_ylabel("Original", labelpad=20, fontdict={'fontsize': 20})
+            ax2.set_ylabel("Reconstructed", labelpad=20, fontdict={'fontsize': 20})
+            for ax in [ax1, ax2]:
+                ax.set_xticks([])
+                ax.set_yticks([])
+                for key, spine in ax.spines.items():
+                    spine.set_visible(False)
             fig.suptitle(f"Epoch: {self.current_epoch}", y=0.95)
-            self.logger.log_image(key=f"Reconstruction/{self.stage}", images=[fig]) #/{self.current_epoch}
+            self.logger.experiment.log({f"Reconstruction/{self.stage}":[wandb.Image(fig, caption="Reconstructed by AE")]})
+            #self.logger.log_image(key=f"Reconstruction/{self.stage}", images=[fig]) #/{self.current_epoch}
             plt.close(fig)
 
         # save for plotting
@@ -295,6 +342,13 @@ class AE_ClusterPipeline(pl.LightningModule):
                 if elem_count[k] == 0:
                     continue
                 self.clustering.update_cluster_center(latent_X.detach().cpu().numpy(), k, cluster_assign.detach().cpu().numpy())
+        if self.args.plot_embeddings:
+            latent_X = self.feature_extractor(self.train_dataloader().dataset.data.to(device=self.device), latent=True).detach().cpu().numpy()
+            clustering_module = self.clustering.model.cluster_model
+            predicted_labels = clustering_module(self.train_dataloader().dataset.data.to(device=self.device).float()).argmax(axis=1).cpu().numpy()
+            true_labels = self.train_dataloader().dataset.targets.detach().cpu().numpy()
+            TSNE_comparison(latent_X, true_labels, predicted_labels, current_epoch=self.current_epoch, alt_num=self.init_clusternet_num, logger=self.logger)
+
 
     def forward(self, x, latent=False):
         # Get the latent features
@@ -316,8 +370,8 @@ class AE_ClusterPipeline(pl.LightningModule):
         self.sampled_codes = torch.empty(0)
         self.sampled_gt = torch.empty(0)
         if self.current_epoch == 0:
-            self.log({'data_stats/train_n_samples': len(self.train_dataloader().dataset)})
-            self.log({'data_stats/val_n_samples': len(self.val_dataloader().dataset)})
+            self.log('data_stats/train_n_samples', len(self.train_dataloader().dataset))
+            self.log('data_stats/val_n_samples', len(self.val_dataloader().dataset))
             if self.args.pretrain:
                 assert self.args.pretrain_epochs > 0
                 print("========== Start pretraining ==========")
@@ -328,7 +382,7 @@ class AE_ClusterPipeline(pl.LightningModule):
                 assert self.args.pretrain_path is not None
                 self._init_clusters()
 
-        elif self.args.pretrain and self.pretrain and self.current_epoch in (5, 10, 15, 20, 25, 30, 35, 40, 50, 100, 500):
+        elif self.args.pretrain and self.pretrain and self.current_epoch in [0, 5, 20, 35, 50, 100,200, 500]:
             print("Saving weights...")
             torch.save(self.state_dict(), f"./saved_models/{self.args.dataset}_{self.current_epoch}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
 
@@ -337,7 +391,13 @@ class AE_ClusterPipeline(pl.LightningModule):
             self.pretrain = False
             print("Saving weights...")
             #torch.save(self.state_dict(), f"./saved_models/{self.args.dataset}_{self.current_epoch}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}")
-            torch.save(self.state_dict(), f"saved_models/{self.args.dataset}/{self.args.exp_name}/trained_model_{self.current_epoch}Epochs")
+            os.makedirs(f"./saved_models/{self.args.dataset}", exist_ok=True)
+            os.makedirs(f"./saved_models/{self.args.dataset}/{self.args.exp_name}", exist_ok=True)
+            torch.save(self.state_dict(), f"./saved_models/{self.args.dataset}/{self.args.exp_name}/trained_model_{self.current_epoch}Epochs")
+            # Delete all the "checkpoint" files in saved_models that begin with the dataset name
+            for f in [F for F in os.listdir(f"./saved_models/") if F.startswith(f"{self.args.dataset}_")]:
+                os.remove(f"./saved_models/{f}")
+            print("Weight checkpoints deleted.")
 
             self._init_clusters()
         if self.args.alternate:
@@ -358,9 +418,9 @@ class AE_ClusterPipeline(pl.LightningModule):
         else:
             self.stage = "val"
             loss, rec_loss, dist_loss = self._step(x, y)
-        self.log({f"{self.stage}/loss": loss})
-        self.log({f"{self.stage}/reconstruction_loss": rec_loss})
-        self.log({f"{self.stage}/dist_loss": dist_loss})
+        self.log(f"{self.stage}/loss", loss)
+        self.log(f"{self.stage}/reconstruction_loss", rec_loss)
+        self.log(f"{self.stage}/dist_loss", dist_loss)
 
         _, assign = self(x)
         y_pred = assign.argmax(-1).cpu().numpy()
@@ -384,9 +444,9 @@ class AE_ClusterPipeline(pl.LightningModule):
         else:
             self.stage = "train"
             loss, rec_loss, dist_loss = self._step(x, y)
-        self.log({f"{self.stage}/loss": loss})
-        self.log({f"{self.stage}/reconstruction_loss": rec_loss})
-        self.log({f"{self.stage}/dist_loss": dist_loss})
+        self.log(f"{self.stage}/loss", loss)
+        self.log(f"{self.stage}/reconstruction_loss", rec_loss)
+        self.log(f"{self.stage}/dist_loss", dist_loss)
 
         return loss
 
@@ -410,9 +470,9 @@ class AE_ClusterPipeline(pl.LightningModule):
 
         if not self.pretrain and self.args.log_emb != "never" and self.current_epoch in (0, 5, 10, 50, 100, 200, 400, 499, 500, 600, 700, 800, 900, 100):
             self.plot_utils.visualize_embeddings(
-                self.args,
-                self.logger,
-                self.args.latent_dim,
+                hparams=self.args,
+                logger=self.logger,
+                codes_dim=self.args.latent_dim,
                 vae_means=self.sampled_codes,
                 vae_labels=self.sampled_gt,
                 val_resp=None,
@@ -422,6 +482,8 @@ class AE_ClusterPipeline(pl.LightningModule):
                 training_stage='train_AE',
                 UMAP=False
             )
+            # get the predicted labels from the model
+            #self.plot_utils.TSNE_comparison(latent_x = self.sampled_codes, true_labels = self.sampled_gt, predictions
 
     @staticmethod
     def add_model_specific_args(parser):
@@ -509,9 +571,9 @@ class AE_ClusterPipeline(pl.LightningModule):
             help="whether to use the convVAE autoencoder (will turn input into 2D if it was flattened)"
         )
 
-        parser.add_argument(
-            "--n_channels",
-            type=int,
-            default=3
-        )
+        # parser.add_argument(
+        #     "--n_channels",
+        #     type=int,
+        #     default=3
+        # )
         return parser
